@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/hamzamehmood46/event-sourced-ledger-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/hamzamehmood46/event-sourced-ledger-dotnet/actions/workflows/ci.yml)
 
+**Live demo: [event-sourced-ledger-dotnet.onrender.com/swagger](https://event-sourced-ledger-dotnet.onrender.com/swagger)** (Swagger UI). Hosted on Render's free tier, so the first load after idle can take about a minute, and demo data resets on restart.
+
+Try it: `POST /api/accounts` to open an account, deposit and withdraw (amounts are in cents), then `GET /api/accounts/{id}/events` to see the immutable history the balance is rebuilt from. `GET /api/accounts` is the separate read model: it lags until you `POST /api/projection/catch-up`, and `POST /api/projection/rebuild` throws it away and replays every event. The headline guarantee is one call away: `POST /api/demo/contention` races 10 workers withdrawing $1 from a $5 balance, and exactly 5 succeed and the balance ends at 0, never negative.
 A bank-account ledger in **.NET 8** built with **event sourcing and CQRS**. Instead of storing a balance and overwriting it, every change is stored as an immutable event (`MoneyDeposited`, `MoneyWithdrawn`, ...). Current state is *derived* by replaying those events, which gives a complete audit trail for free, which is exactly what financial systems need.
 
 ```
@@ -44,7 +47,8 @@ src/Ledger/
   EventStore.cs      IEventStore + SQLite append-only implementation (ADO.NET)
   AccountService.cs  Load -> command -> save, with conflict retry
   Projection.cs      Read model with checkpoint and rebuild
-tests/Ledger.Tests/  20 xUnit tests against a real SQLite database
+src/Ledger.Demo/      Minimal API used for the live demo (Swagger UI)
+tests/Ledger.Tests/  26 xUnit tests against a real SQLite database, including the demo API
 ```
 
 ## Try it
